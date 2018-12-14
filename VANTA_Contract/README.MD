@@ -48,3 +48,25 @@ ETC / Burn Function
 - setApTime : a grade private 락 해제 시간 설정 / 해제 시간 + 30일씩 추가
 - setBpTime : b grade private 락 해제 시간 설정 / 해제 시간 + 30일씩 추가
 - burnToken : 토큰 
+
+
+테스트 완료
+- apSaleIssue
+- bpSaleIssue
+- saleIssue
+- transfer
+- tokenLockUp
+- tokenLock
+- refund Function 삭제 (Bad instruction)
+- bdevIssue
+- mktIssue
+- rndIssue
+- reserveIssue
+- teamIssue
+- advisorIssue
+- setApTime
+- setBpTime
+- endSale
+- apLockUp
+- bpLockUp
+- close

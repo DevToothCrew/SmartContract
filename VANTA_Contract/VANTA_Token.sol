@@ -410,25 +410,26 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function apLockUp(address _to) onlyOwner public
     {
         require(tokenLock == false);
+        require(saleTime == false);
         
         uint time = now;
         uint unlockTokens = 0;
 
-        if(time >= apLock_1 && ap1[_to] > 0)
+        if( (time >= apLock_1) && (ap1[_to] > 0) )
         {
             balances[_to] = balances[_to].add(ap1[_to]);
             unlockTokens = unlockTokens.add(ap1[_to]);
             ap1[_to] = 0;
         }
         
-        if(time >= apLock_2 && ap2[_to] > 0)
+        if( (time >= apLock_2) && (ap2[_to] > 0) )
         {
             balances[_to] = balances[_to].add(ap2[_to]);
             unlockTokens = unlockTokens.add(ap2[_to]);
             ap2[_to] = 0;
         }
         
-        if(time >= apLock_3 && ap3[_to] > 0)
+        if( (time >= apLock_3) && (ap3[_to] > 0) )
         {
             balances[_to] = balances[_to].add(ap3[_to]);
             unlockTokens = unlockTokens.add(ap3[_to]);
@@ -441,18 +442,19 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function bpLockUp(address _to) onlyOwner public
     {
         require(tokenLock == false);
+        require(saleTime == false);
         
         uint time = now;
         uint unlockTokens = 0;
 
-        if(time >= bpLock_1 && bp1[_to] > 0)
+        if( (time >= bpLock_1) && (bp1[_to] > 0) )
         {
             balances[_to] = balances[_to].add(bp1[_to]);
             unlockTokens = unlockTokens.add(bp1[_to]);
             bp1[_to] = 0;
         }
         
-        if(time >= bpLock_2 && bp2[_to] > 0)
+        if( (time >= bpLock_2) && (bp2[_to] > 0) )
         {
             balances[_to] = balances[_to].add(bp2[_to]);
             unlockTokens = unlockTokens.add(bp2[_to]);
@@ -491,6 +493,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function setApTime(uint _time) onlyOwner public
     {
         require(tokenLock == true);
+        require(saleTime == true);
         apLock_1 = _time;
         apLock_2 = _time.add(month);
         apLock_3 = apLock_2.add(month);
@@ -499,8 +502,65 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function setBpTime(uint _time) onlyOwner public
     {
         require(tokenLock == true);
+        require(saleTime == true);
         bpLock_1 = _time;
         bpLock_2 = _time.add(month);
+    }
+    
+    function refundApToken(address _from) onlyOwner public
+    {
+        require(balances[_from] > 0);
+        require(tokenLock == true);
+        require(saleTime == true);
+        
+        uint tokens = balances[_from].add(ap1[_from] + ap2[_from] + ap3[_from]);
+        balances[_from] = 0;
+        ap1[_from] = 0;
+        ap2[_from] = 0;
+        ap3[_from] = 0;
+        
+        totalTokenSupply = totalTokenSupply.sub(tokens);
+        tokenIssuedSale = tokenIssuedSale.sub(tokens);
+        apIssuedSale = apIssuedSale.sub(tokens);
+        
+        emit Refund(_from, msg.sender, tokens);
+        emit Transfer( _from, msg.sender, tokens);
+    }
+    
+    function refundBpToken(address _from) onlyOwner public
+    {
+        require(balances[_from] > 0);
+        require(tokenLock == true);
+        require(saleTime == true);
+        
+        uint tokens = balances[_from].add(bp1[_from] + bp2[_from]);
+        balances[_from] = 0;
+        bp1[_from] = 0;
+        bp2[_from] = 0;
+        
+        totalTokenSupply = totalTokenSupply.sub(tokens);
+        tokenIssuedSale = tokenIssuedSale.sub(tokens);
+        bpIssuedSale = bpIssuedSale.sub(tokens);
+        
+        emit Refund(_from, msg.sender, tokens);
+        emit Transfer( _from, msg.sender, tokens);
+    }
+    
+    function refundToken(address _from) onlyOwner public
+    {
+        require(balances[_from] > 0);
+        require(tokenLock == true);
+        require(saleTime == true);
+        
+        uint tokens = balances[_from];
+        balances[_from] = 0;
+        
+        totalTokenSupply = totalTokenSupply.sub(tokens);
+        tokenIssuedSale = tokenIssuedSale.sub(tokens);
+        pbIssuedSale = pbIssuedSale.sub(tokens);
+        
+        emit Refund(_from, msg.sender, tokens);
+        emit Transfer( _from, address(0x0), tokens);
     }
     
     function burnToken(address _from) onlyOwner public
