@@ -252,7 +252,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function apSaleIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxSaleSupply <= tokenIssuedSale.add(tokens));
+        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
         
         balances[_to]   = balances[_to].add( tokens.mul(385)/1000 );
         ap1[_to]        = ap1[_to].add( tokens.mul(385)/1000 );
@@ -269,7 +269,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function bpSaleIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxSaleSupply <= tokenIssuedSale.add(tokens));
+        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
         
         balances[_to]   = balances[_to].add( tokens.mul(435)/1000 );
         bp1[_to]        = bp1[_to].add( tokens.mul(435)/1000 );
@@ -286,7 +286,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function saleIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxSaleSupply <= tokenIssuedSale.add(tokens));
+        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -300,7 +300,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function bdevIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxBdevSupply <= tokenIssuedBdev.add(tokens));
+        require(maxBdevSupply >= tokenIssuedBdev.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -313,7 +313,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function mktIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxMktSupply <= tokenIssuedMkt.add(tokens));
+        require(maxMktSupply >= tokenIssuedMkt.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -326,7 +326,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function rndIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxRndSupply <= tokenIssuedRnd.add(tokens));
+        require(maxRndSupply >= tokenIssuedRnd.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -339,7 +339,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function reserveIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxReserveSupply <= tokenIssuedReserve.add(tokens));
+        require(maxReserveSupply >= tokenIssuedReserve.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -352,7 +352,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function teamIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxTeamSupply <= tokenIssuedTeam.add(tokens));
+        require(maxTeamSupply >= tokenIssuedTeam.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
@@ -365,7 +365,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function advisorIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
-        require(maxAdvisorSupply <= tokenIssuedAdvisor.add(tokens));
+        require(maxAdvisorSupply >= tokenIssuedAdvisor.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
         
