@@ -106,8 +106,8 @@ contract VantaToken is ERC20Interface, OwnerHelper
     uint constant public maxBdevSupply      =  8430000000 * E18;
     uint constant public maxMktSupply       =  8430000000 * E18;
     uint constant public maxRndSupply       =  8430000000 * E18;
-    uint constant public maxTeamSupply      =  2810000000 * E18;
-    uint constant public maxReserveSupply   =  5620000000 * E18;
+    uint constant public maxTeamSupply      =  5620000000 * E18;
+    uint constant public maxReserveSupply   =  2810000000 * E18;
     uint constant public maxAdvisorSupply   =  2810000000 * E18;
     
     
