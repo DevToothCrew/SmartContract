@@ -151,7 +151,6 @@ contract VantaToken is ERC20Interface, OwnerHelper
     bool public tokenLock = true;
     bool public saleTime = true;
     
-    event Refund(address indexed _from, address indexed _to, uint _value);
     event Burn(address indexed _from, uint _value);
     
     event SaleIssue(address indexed _to, uint _tokens);
@@ -466,7 +465,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     
     // -----
     
-    // ETC / Refund / Burn Function -----
+    // ETC / Burn Function -----
     
     function () payable external
     {
@@ -505,62 +504,6 @@ contract VantaToken is ERC20Interface, OwnerHelper
         require(saleTime == true);
         bpLock_1 = _time;
         bpLock_2 = _time.add(month);
-    }
-    
-    function refundApToken(address _from) onlyOwner public
-    {
-        require(balances[_from] > 0);
-        require(tokenLock == true);
-        require(saleTime == true);
-        
-        uint tokens = balances[_from].add(ap1[_from] + ap2[_from] + ap3[_from]);
-        balances[_from] = 0;
-        ap1[_from] = 0;
-        ap2[_from] = 0;
-        ap3[_from] = 0;
-        
-        totalTokenSupply = totalTokenSupply.sub(tokens);
-        tokenIssuedSale = tokenIssuedSale.sub(tokens);
-        apIssuedSale = apIssuedSale.sub(tokens);
-        
-        emit Refund(_from, msg.sender, tokens);
-        emit Transfer( _from, msg.sender, tokens);
-    }
-    
-    function refundBpToken(address _from) onlyOwner public
-    {
-        require(balances[_from] > 0);
-        require(tokenLock == true);
-        require(saleTime == true);
-        
-        uint tokens = balances[_from].add(bp1[_from] + bp2[_from]);
-        balances[_from] = 0;
-        bp1[_from] = 0;
-        bp2[_from] = 0;
-        
-        totalTokenSupply = totalTokenSupply.sub(tokens);
-        tokenIssuedSale = tokenIssuedSale.sub(tokens);
-        bpIssuedSale = bpIssuedSale.sub(tokens);
-        
-        emit Refund(_from, msg.sender, tokens);
-        emit Transfer( _from, msg.sender, tokens);
-    }
-    
-    function refundToken(address _from) onlyOwner public
-    {
-        require(balances[_from] > 0);
-        require(tokenLock == true);
-        require(saleTime == true);
-        
-        uint tokens = balances[_from];
-        balances[_from] = 0;
-        
-        totalTokenSupply = totalTokenSupply.sub(tokens);
-        tokenIssuedSale = tokenIssuedSale.sub(tokens);
-        pbIssuedSale = pbIssuedSale.sub(tokens);
-        
-        emit Refund(_from, msg.sender, tokens);
-        emit Transfer( _from, address(0x0), tokens);
     }
     
     function burnToken(address _from) onlyOwner public
