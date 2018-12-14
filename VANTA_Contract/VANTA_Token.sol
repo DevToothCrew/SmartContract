@@ -393,11 +393,18 @@ contract VantaToken is ERC20Interface, OwnerHelper
         return false;
     }
     
-    function tokenLockUp(bool _boolean) onlyOwner public
+    function setTokenLockUp() onlyOwner public
     {
-        require(tokenLock == _boolean);
+        require(tokenLock == true);
         
-        tokenLock = _boolean;
+        tokenLock = false;
+    }
+    
+    function setTokenLock() onlyOwner public
+    {
+        require(tokenLock == false);
+        
+        tokenLock = true;
     }
     
     function apLockUp(address _to) onlyOwner public
