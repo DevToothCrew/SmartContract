@@ -1,4 +1,4 @@
-SafeMath
+﻿SafeMath
 - https://blog.naver.com/soolmini/221256720072
 - 추후 Wiki 추가 예정
 
@@ -40,14 +40,11 @@ Lock Function
 - apLockUp : a grade private 락 해제
 - bpLockUp : b grade private 락 해제
 
-ETC / Refund / Burn Function
+ETC / Burn Function
 - 기타 / 회수 / 소각 함수
 - () payable : 폴백 함수 / 컨트랙트로 토큰 전송 못하게
 - endSale : 세일 종료 함수 / 투자 회수도 불가능
 - withdrawTokens : 토큰 회수
 - setApTime : a grade private 락 해제 시간 설정 / 해제 시간 + 30일씩 추가
 - setBpTime : b grade private 락 해제 시간 설정 / 해제 시간 + 30일씩 추가
-- refundApToken : a grade private 세일 물량 회수 / endSale 이후 불가능
-- refundBpToken : b grade private 세일 물량 회수 / endSale 이후 불가능
-- refundToken : public 세일 물량 회수 / endSale 이후 불가능
 - burnToken : 토큰 
