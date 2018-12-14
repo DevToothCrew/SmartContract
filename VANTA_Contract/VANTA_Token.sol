@@ -506,18 +506,19 @@ contract VantaToken is ERC20Interface, OwnerHelper
         bpLock_2 = _time.add(month);
     }
     
-    function burnToken(address _from) onlyOwner public
+    function burnToken(uint _value) onlyOwner public
     {
-        require(balances[_from] > 0);
+        uint tokens = _value * E18;
         
-        uint tokens = balances[_from];
-        balances[_from] = 0;
+        require(balances[msg.sender] >= tokens);
+        
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
         
         burnTokenSupply = burnTokenSupply.add(tokens);
         totalTokenSupply = totalTokenSupply.sub(tokens);
         
-        emit Burn(_from, tokens);
-        emit Transfer( _from, address(0x0), tokens);
+        emit Burn(msg.sender, tokens);
+        emit Transfer( msg.sender, address(0x0), tokens);
     }
     
     function close() public
