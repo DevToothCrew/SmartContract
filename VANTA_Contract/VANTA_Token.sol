@@ -37,40 +37,71 @@ library SafeMath
 
 contract OwnerHelper
 {
-  	address public owner1;
-  	address public owner2;
+  	address public master;
+  	address public issuer;
+  	address public manager;
 
-  	event OwnerTransferPropose(address indexed _from, address indexed _to);
+  	event ChangeMaster(address indexed _from, address indexed _to);
+  	event ChangeIssuer(address indexed _from, address indexed _to);
+  	event ChangeManager(address indexed _from, address indexed _to);
 
-  	modifier onlyOwner
+  	modifier onlyMaster
 	{
-		require(msg.sender == owner1 || msg.sender == owner2);
+		require(msg.sender == master);
+		_;
+  	}
+  	
+  	modifier onlyIssuer
+	{
+		require(msg.sender == issuer);
+		_;
+  	}
+  	
+  	modifier onlyManager
+	{
+		require(msg.sender == manager);
 		_;
   	}
 
   	constructor() public
 	{
-		owner1 = msg.sender;
+		master = msg.sender;
+  	}
+  	
+  	function transferMastership(address _to) onlyMaster public
+  	{
+        require(_to != master);
+        require(_to != issuer);
+        require(_to != manager);
+        require(_to != address(0x0));
+  	    
+  	    master = _to;
+  	    
+  	    emit ChangeMaster(msg.sender, _to);
   	}
 
-  	function transferOwner1(address _to) onlyOwner public
+  	function transferIssuer(address _to) onlyMaster public
 	{
-        require(_to != owner1);
-        require(_to != owner2);
+        require(_to != master);
+        require(_to != issuer);
+        require(_to != manager);
         require(_to != address(0x0));
-    	owner1 = _to;
         
-    	emit OwnerTransferPropose(msg.sender, _to);
+    	issuer = _to;
+        
+    	emit ChangeIssuer(msg.sender, _to);
   	}
 
-  	function transferOwner2(address _to) onlyOwner public
+  	function transferManager(address _to) onlyMaster public
 	{
-        require(_to != owner1);
-        require(_to != owner2);
+        require(_to != master);
+        require(_to != issuer);
+        require(_to != manager);
         require(_to != address(0x0));
-    	owner2 = _to;
         
-    	emit OwnerTransferPropose(msg.sender, _to);
+    	manager = _to;
+        
+    	emit ChangeManager(msg.sender, _to);
   	}
 }
 
@@ -90,8 +121,6 @@ contract ERC20Interface
 contract VantaToken is ERC20Interface, OwnerHelper
 {
     using SafeMath for uint;
-
-    address private creator;
     
     string public name;
     uint public decimals;
@@ -168,7 +197,6 @@ contract VantaToken is ERC20Interface, OwnerHelper
         name        = "VANTA Token";
         decimals    = 18;
         symbol      = "VNT";
-        creator     = msg.sender;
         
         totalTokenSupply = 0;
         
@@ -248,7 +276,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     
     // Issue Function -----
     
-    function apSaleIssue(address _to, uint _value) onlyOwner public
+    function apSaleIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
@@ -265,7 +293,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit SaleIssue(_to, tokens);
     }
     
-    function bpSaleIssue(address _to, uint _value) onlyOwner public
+    function bpSaleIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
@@ -282,7 +310,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         
     }
     
-    function saleIssue(address _to, uint _value) onlyOwner public
+    function saleIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
@@ -296,7 +324,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit SaleIssue(_to, tokens);
     }
     
-    function bdevIssue(address _to, uint _value) onlyOwner public
+    function bdevIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxBdevSupply >= tokenIssuedBdev.add(tokens));
@@ -309,7 +337,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit BdevIssue(_to, tokens);
     }
     
-    function mktIssue(address _to, uint _value) onlyOwner public
+    function mktIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxMktSupply >= tokenIssuedMkt.add(tokens));
@@ -322,7 +350,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit MktIssue(_to, tokens);
     }
     
-    function rndIssue(address _to, uint _value) onlyOwner public
+    function rndIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxRndSupply >= tokenIssuedRnd.add(tokens));
@@ -335,7 +363,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit RndIssue(_to, tokens);
     }
     
-    function reserveIssue(address _to, uint _value) onlyOwner public
+    function reserveIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxReserveSupply >= tokenIssuedReserve.add(tokens));
@@ -348,7 +376,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit ReserveIssue(_to, tokens);
     }
     
-    function teamIssue(address _to, uint _value) onlyOwner public
+    function teamIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxTeamSupply >= tokenIssuedTeam.add(tokens));
@@ -361,7 +389,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit TeamIssue(_to, tokens);
     }
     
-    function advisorIssue(address _to, uint _value) onlyOwner public
+    function advisorIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxAdvisorSupply >= tokenIssuedAdvisor.add(tokens));
@@ -384,7 +412,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         {
             return true;
         }
-        else if(msg.sender == owner1 || msg.sender == owner2)
+        else if(msg.sender == manager)
         {
             return true;
         }
@@ -392,21 +420,21 @@ contract VantaToken is ERC20Interface, OwnerHelper
         return false;
     }
     
-    function setTokenLockUp() onlyOwner public
+    function setTokenLockUp() onlyManager public
     {
         require(tokenLock == true);
         
         tokenLock = false;
     }
     
-    function setTokenLock() onlyOwner public
+    function setTokenLock() onlyManager public
     {
         require(tokenLock == false);
         
         tokenLock = true;
     }
     
-    function apLockUp(address _to) onlyOwner public
+    function apLockUp(address _to) onlyManager public
     {
         require(tokenLock == false);
         require(saleTime == false);
@@ -438,7 +466,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit TokenUnLock(_to, unlockTokens);
     }
     
-    function bpLockUp(address _to) onlyOwner public
+    function bpLockUp(address _to) onlyManager public
     {
         require(tokenLock == false);
         require(saleTime == false);
@@ -472,24 +500,31 @@ contract VantaToken is ERC20Interface, OwnerHelper
         revert();
     }
     
-    function endSale() onlyOwner public
+    function endSale() onlyManager public
     {
         require(saleTime == true);
         
         saleTime = false;
     }
     
-    function withdrawTokens(address _to, uint _value) onlyOwner public
+    function withdrawTokens(address _contract, uint _decimals, address _to, uint _value) onlyManager public
     {
-        uint tokens = _value * E18;
-        
-        balances[_to] = balances[_to].add(tokens);
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        
-        emit Transfer(address(0x0), _to, tokens);
+
+        if(_contract == address(0x0))
+        {
+            uint eth = _value ** _decimals;
+            msg.sender.transfer(eth);
+        }
+        else
+        {
+            uint tokens = _value ** _decimals;
+            ERC20Interface(_contract).transfer(msg.sender, tokens);
+            
+            emit Transfer(address(0x0), _to, tokens);
+        }
     }
     
-    function setApTime(uint _time) onlyOwner public
+    function setApTime(uint _time) onlyManager public
     {
         require(tokenLock == true);
         require(saleTime == true);
@@ -498,7 +533,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         apLock_3 = apLock_2.add(month);
     }
     
-    function setBpTime(uint _time) onlyOwner public
+    function setBpTime(uint _time) onlyManager public
     {
         require(tokenLock == true);
         require(saleTime == true);
@@ -506,7 +541,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         bpLock_2 = _time.add(month);
     }
     
-    function burnToken(uint _value) onlyOwner public
+    function burnToken(uint _value) onlyManager public
     {
         uint tokens = _value * E18;
         
@@ -521,9 +556,8 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit Transfer( msg.sender, address(0x0), tokens);
     }
     
-    function close() public
+    function close() onlyMaster public
     {
-        require(msg.sender == creator);
         selfdestruct(msg.sender);
     }
     
