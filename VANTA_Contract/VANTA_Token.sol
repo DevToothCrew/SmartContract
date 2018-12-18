@@ -507,7 +507,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         saleTime = false;
     }
     
-    function withdrawTokens(address _contract, uint _decimals, address _to, uint _value) onlyManager public
+    function withdrawTokens(address _contract, uint _decimals, uint _value) onlyManager public
     {
 
         if(_contract == address(0x0))
@@ -520,7 +520,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
             uint tokens = _value.mul(10 ** _decimals);
             ERC20Interface(_contract).transfer(msg.sender, tokens);
             
-            emit Transfer(address(0x0), _to, tokens);
+            emit Transfer(address(0x0), msg.sender, tokens);
         }
     }
     
