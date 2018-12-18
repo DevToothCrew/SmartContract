@@ -420,7 +420,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         return false;
     }
     
-    function setTokenLockUp() onlyManager public
+    function setTokenUnlock() onlyManager public
     {
         require(tokenLock == true);
         
@@ -434,7 +434,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         tokenLock = true;
     }
     
-    function apLockUp(address _to) onlyManager public
+    function apUnlock(address _to) onlyManager public
     {
         require(tokenLock == false);
         require(saleTime == false);
@@ -466,7 +466,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit TokenUnLock(_to, unlockTokens);
     }
     
-    function bpLockUp(address _to) onlyManager public
+    function bpUnlock(address _to) onlyManager public
     {
         require(tokenLock == false);
         require(saleTime == false);
