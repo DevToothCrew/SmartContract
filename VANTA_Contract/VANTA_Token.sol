@@ -512,12 +512,12 @@ contract VantaToken is ERC20Interface, OwnerHelper
 
         if(_contract == address(0x0))
         {
-            uint eth = _value ** _decimals;
+            uint eth = _value.mul(10 ** _decimals);
             msg.sender.transfer(eth);
         }
         else
         {
-            uint tokens = _value ** _decimals;
+            uint tokens = _value.mul(10 ** _decimals);
             ERC20Interface(_contract).transfer(msg.sender, tokens);
             
             emit Transfer(address(0x0), _to, tokens);
@@ -553,7 +553,6 @@ contract VantaToken is ERC20Interface, OwnerHelper
         totalTokenSupply = totalTokenSupply.sub(tokens);
         
         emit Burn(msg.sender, tokens);
-        emit Transfer( msg.sender, address(0x0), tokens);
     }
     
     function close() onlyMaster public
