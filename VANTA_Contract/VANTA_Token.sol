@@ -139,13 +139,18 @@ contract VantaToken is ERC20Interface, OwnerHelper
     uint constant public maxReserveSupply   =  2810000000 * E18;
     uint constant public maxAdvisorSupply   =  2810000000 * E18;
     
+    uint constant public teamVestingSupplyPerTime       = 351250000 * E18;
+    uint constant public advisorVestingSupplyPerTime    = 702500000 * E18;
+    uint constant public teamVestingDate                = 2 * month;
+    uint constant public teamVestingTime                = 16;
+    uint constant public advisorVestingDate             = 3 * month;
+    uint constant public advisorVestingTime             = 4;
     
     uint public totalTokenSupply;
     
     uint public tokenIssuedSale;
-    uint public apIssuedSale;
-    uint public bpIssuedSale;
-    uint public pbIssuedSale;
+    uint public privateIssuedSale;
+    uint public publicIssuedSale;
     uint public tokenIssuedBdev;
     uint public tokenIssuedMkt;
     uint public tokenIssuedRnd;
@@ -155,30 +160,19 @@ contract VantaToken is ERC20Interface, OwnerHelper
     
     uint public burnTokenSupply;
     
-    
     mapping (address => uint) public balances;
     mapping (address => mapping ( address => uint )) public approvals;
     
+    mapping (address => uint) public privateFirstWallet;
     
-    mapping (address => uint) public ap1;
-    uint public apLock_1 = 1514818800;
+    mapping (address => uint) public privateSecondWallet;
     
-    mapping (address => uint) public ap2;
-    uint public apLock_2 = 1514818800;
-    
-    mapping (address => uint) public ap3;
-    uint public apLock_3 = 1514818800;
-
-
-    mapping (address => uint) public bp1;
-    uint public bpLock_1 = 1514818800;
-    
-    mapping (address => uint) public bp2;
-    uint public bpLock_2 = 1514818800;
-
+    mapping (uint => uint) public teamVestingTimeAtSupply;
+    mapping (uint => uint) public advisorVestingTimeAtSupply;
     
     bool public tokenLock = true;
     bool public saleTime = true;
+    uint public endSaleTime = 0;
     
     event Burn(address indexed _from, uint _value);
     
@@ -209,6 +203,9 @@ contract VantaToken is ERC20Interface, OwnerHelper
         tokenIssuedAdvisor  = 0;
         
         require(maxTotalSupply == maxSaleSupply + maxBdevSupply + maxMktSupply + maxRndSupply + maxTeamSupply + maxReserveSupply + maxAdvisorSupply);
+        
+        require(maxTeamSupply == teamVestingSupplyPerTime * teamVestingTime);
+        require(maxAdvisorSupply == advisorVestingSupplyPerTime * advisorVestingTime);
     }
     
     // ERC - 20 Interface -----
@@ -221,8 +218,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function balanceOf(address _who) view public returns (uint) 
     {
         uint balance = balances[_who];
-        balance = balance.add(ap1[_who] + ap2[_who] + ap3[_who]);
-        balance = balance.add(bp1[_who] + bp2[_who]);
+        balance = balance.add(privateFirstWallet[_who] + privateSecondWallet[_who]);
         
         return balance;
     }
@@ -276,41 +272,23 @@ contract VantaToken is ERC20Interface, OwnerHelper
     
     // Issue Function -----
     
-    function apSaleIssue(address _to, uint _value) onlyIssuer public
+    function privateIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
         
-        balances[_to]   = balances[_to].add( tokens.mul(385)/1000 );
-        ap1[_to]        = ap1[_to].add( tokens.mul(385)/1000 );
-        ap2[_to]        = ap2[_to].add( tokens.mul(115)/1000 );
-        ap3[_to]        = ap3[_to].add( tokens.mul(115)/1000 );
+        balances[_to]                   = balances[_to].add( tokens.mul(435)/1000 );
+        privateFirstWallet[_to]         = privateFirstWallet[_to].add( tokens.mul(435)/1000 );
+        privateSecondWallet[_to]        = privateSecondWallet[_to].add( tokens.mul(130)/1000 );
         
         totalTokenSupply = totalTokenSupply.add(tokens);
         tokenIssuedSale = tokenIssuedSale.add(tokens);
-        apIssuedSale = apIssuedSale.add(tokens);
+        privateIssuedSale = privateIssuedSale.add(tokens);
         
         emit SaleIssue(_to, tokens);
     }
     
-    function bpSaleIssue(address _to, uint _value) onlyIssuer public
-    {
-        uint tokens = _value * E18;
-        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
-        
-        balances[_to]   = balances[_to].add( tokens.mul(435)/1000 );
-        bp1[_to]        = bp1[_to].add( tokens.mul(435)/1000 );
-        bp2[_to]        = bp2[_to].add( tokens.mul(130)/1000 );
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedSale = tokenIssuedSale.add(tokens);
-        bpIssuedSale = bpIssuedSale.add(tokens);
-        
-        emit SaleIssue(_to, tokens);
-        
-    }
-    
-    function saleIssue(address _to, uint _value) onlyIssuer public
+    function publicIssue(address _to, uint _value) onlyIssuer public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
@@ -319,7 +297,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         
         totalTokenSupply = totalTokenSupply.add(tokens);
         tokenIssuedSale = tokenIssuedSale.add(tokens);
-        pbIssuedSale = pbIssuedSale.add(tokens);
+        publicIssuedSale = publicIssuedSale.add(tokens);
         
         emit SaleIssue(_to, tokens);
     }
@@ -376,12 +354,24 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit ReserveIssue(_to, tokens);
     }
     
-    function teamIssue(address _to, uint _value) onlyIssuer public
+    // ----
+    
+    // Vesting Issue Function -----
+    
+    function teamIssueVesting(address _to, uint _time) onlyIssuer public
     {
-        uint tokens = _value * E18;
+        require(saleTime == false);
+        require(teamVestingTime <= _time);
+        
+        uint time = now;
+        require( ( ( endSaleTime + (_time * teamVestingDate) ) < time ) && ( teamVestingTimeAtSupply[_time] > 0 ) );
+        
+        uint tokens = teamVestingTimeAtSupply[_time];
+
         require(maxTeamSupply >= tokenIssuedTeam.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
+        teamVestingTimeAtSupply[_time] = 0;
         
         totalTokenSupply = totalTokenSupply.add(tokens);
         tokenIssuedTeam = tokenIssuedTeam.add(tokens);
@@ -389,12 +379,20 @@ contract VantaToken is ERC20Interface, OwnerHelper
         emit TeamIssue(_to, tokens);
     }
     
-    function advisorIssue(address _to, uint _value) onlyIssuer public
+    function advisorIssueVesting(address _to, uint _time) onlyIssuer public
     {
-        uint tokens = _value * E18;
+        require(saleTime == false);
+        require(advisorVestingTime <= _time);
+        
+        uint time = now;
+        require( ( ( endSaleTime + (_time * advisorVestingDate) ) < time ) && ( advisorVestingTimeAtSupply[_time] > 0 ) );
+        
+        uint tokens = advisorVestingTimeAtSupply[_time];
+        
         require(maxAdvisorSupply >= tokenIssuedAdvisor.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
+        advisorVestingTimeAtSupply[_time] = 0;
         
         totalTokenSupply = totalTokenSupply.add(tokens);
         tokenIssuedAdvisor = tokenIssuedAdvisor.add(tokens);
@@ -423,6 +421,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function setTokenUnlock() onlyManager public
     {
         require(tokenLock == true);
+        require(saleTime == false);
         
         tokenLock = false;
     }
@@ -434,7 +433,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
         tokenLock = true;
     }
     
-    function apUnlock(address _to) onlyManager public
+    function privateUnlock(address _to) onlyManager public
     {
         require(tokenLock == false);
         require(saleTime == false);
@@ -442,50 +441,18 @@ contract VantaToken is ERC20Interface, OwnerHelper
         uint time = now;
         uint unlockTokens = 0;
 
-        if( (time >= apLock_1) && (ap1[_to] > 0) )
+        if( (time >= endSaleTime.add(month)) && (privateFirstWallet[_to] > 0) )
         {
-            balances[_to] = balances[_to].add(ap1[_to]);
-            unlockTokens = unlockTokens.add(ap1[_to]);
-            ap1[_to] = 0;
+            balances[_to] = balances[_to].add(privateFirstWallet[_to]);
+            unlockTokens = unlockTokens.add(privateFirstWallet[_to]);
+            privateFirstWallet[_to] = 0;
         }
         
-        if( (time >= apLock_2) && (ap2[_to] > 0) )
+        if( (time >= endSaleTime.add(month * 2)) && (privateSecondWallet[_to] > 0) )
         {
-            balances[_to] = balances[_to].add(ap2[_to]);
-            unlockTokens = unlockTokens.add(ap2[_to]);
-            ap2[_to] = 0;
-        }
-        
-        if( (time >= apLock_3) && (ap3[_to] > 0) )
-        {
-            balances[_to] = balances[_to].add(ap3[_to]);
-            unlockTokens = unlockTokens.add(ap3[_to]);
-            ap3[_to] = 0;
-        }
-        
-        emit TokenUnLock(_to, unlockTokens);
-    }
-    
-    function bpUnlock(address _to) onlyManager public
-    {
-        require(tokenLock == false);
-        require(saleTime == false);
-        
-        uint time = now;
-        uint unlockTokens = 0;
-
-        if( (time >= bpLock_1) && (bp1[_to] > 0) )
-        {
-            balances[_to] = balances[_to].add(bp1[_to]);
-            unlockTokens = unlockTokens.add(bp1[_to]);
-            bp1[_to] = 0;
-        }
-        
-        if( (time >= bpLock_2) && (bp2[_to] > 0) )
-        {
-            balances[_to] = balances[_to].add(bp2[_to]);
-            unlockTokens = unlockTokens.add(bp2[_to]);
-            bp2[_to] = 0;
+            balances[_to] = balances[_to].add(privateSecondWallet[_to]);
+            unlockTokens = unlockTokens.add(privateSecondWallet[_to]);
+            privateSecondWallet[_to] = 0;
         }
         
         emit TokenUnLock(_to, unlockTokens);
@@ -505,6 +472,20 @@ contract VantaToken is ERC20Interface, OwnerHelper
         require(saleTime == true);
         
         saleTime = false;
+        
+        uint time = now;
+        
+        endSaleTime = time;
+        
+        for(uint i = 1; i <= teamVestingTime; i++)
+        {
+            teamVestingTimeAtSupply[i] = teamVestingTimeAtSupply[i].add(teamVestingSupplyPerTime);
+        }
+        
+        for(uint i = 1; i <= advisorVestingTime; i++)
+        {
+            advisorVestingTimeAtSupply[i] = advisorVestingTimeAtSupply[i].add(advisorVestingSupplyPerTime);
+        }
     }
     
     function withdrawTokens(address _contract, uint _decimals, uint _value) onlyManager public
@@ -522,23 +503,6 @@ contract VantaToken is ERC20Interface, OwnerHelper
             
             emit Transfer(address(0x0), msg.sender, tokens);
         }
-    }
-    
-    function setApTime(uint _time) onlyManager public
-    {
-        require(tokenLock == true);
-        require(saleTime == true);
-        apLock_1 = _time;
-        apLock_2 = _time.add(month);
-        apLock_3 = apLock_2.add(month);
-    }
-    
-    function setBpTime(uint _time) onlyManager public
-    {
-        require(tokenLock == true);
-        require(saleTime == true);
-        bpLock_1 = _time;
-        bpLock_2 = _time.add(month);
     }
     
     function burnToken(uint _value) onlyManager public
