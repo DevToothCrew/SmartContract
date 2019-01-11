@@ -70,38 +70,41 @@ contract OwnerHelper
   	
   	function transferMastership(address _to) onlyMaster public
   	{
-        require(_to != master);
-        require(_to != issuer);
-        require(_to != manager);
-        require(_to != address(0x0));
+        	require(_to != master);
+        	require(_to != issuer);
+        	require(_to != manager);
+        	require(_to != address(0x0));
+
+		address from = master;
+  	    	master = _to;
   	    
-  	    master = _to;
-  	    
-  	    emit ChangeMaster(msg.sender, _to);
+  	    	emit ChangeMaster(from, _to);
   	}
 
   	function transferIssuer(address _to) onlyMaster public
 	{
-        require(_to != master);
-        require(_to != issuer);
-        require(_to != manager);
-        require(_to != address(0x0));
+	        require(_to != master);
+        	require(_to != issuer);
+        	require(_to != manager);
+	        require(_to != address(0x0));
+
+		address from = issuer;        
+	    	issuer = _to;
         
-    	issuer = _to;
-        
-    	emit ChangeIssuer(msg.sender, _to);
+    		emit ChangeIssuer(from, _to);
   	}
 
   	function transferManager(address _to) onlyMaster public
 	{
-        require(_to != master);
-        require(_to != issuer);
-        require(_to != manager);
-        require(_to != address(0x0));
+	        require(_to != master);
+	        require(_to != issuer);
+        	require(_to != manager);
+	        require(_to != address(0x0));
+        	
+		address from = manager;
+    		manager = _to;
         
-    	manager = _to;
-        
-    	emit ChangeManager(msg.sender, _to);
+	    	emit ChangeManager(from, _to);
   	}
 }
 
@@ -127,7 +130,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     string public symbol;
     
     uint constant private E18 = 1000000000000000000;
-    uint private constant month = 2592000;
+    uint constant private month = 2592000;
     
     uint constant public maxTotalSupply     = 56200000000 * E18;
     
