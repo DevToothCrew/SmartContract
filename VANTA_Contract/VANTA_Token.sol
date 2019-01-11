@@ -364,7 +364,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function teamIssueVesting(address _to, uint _time) onlyIssuer public
     {
         require(saleTime == false);
-        require(teamVestingTime <= _time);
+        require(teamVestingTime >= _time);
         
         uint time = now;
         require( ( ( endSaleTime + (_time * teamVestingDate) ) < time ) && ( teamVestingTimeAtSupply[_time] > 0 ) );
@@ -385,7 +385,7 @@ contract VantaToken is ERC20Interface, OwnerHelper
     function advisorIssueVesting(address _to, uint _time) onlyIssuer public
     {
         require(saleTime == false);
-        require(advisorVestingTime <= _time);
+        require(advisorVestingTime >= _time);
         
         uint time = now;
         require( ( ( endSaleTime + (_time * advisorVestingDate) ) < time ) && ( advisorVestingTimeAtSupply[_time] > 0 ) );
