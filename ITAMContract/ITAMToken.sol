@@ -290,7 +290,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     
     // Vesting Issue Function -----
     
-    function advSptIssueVesting(address _to, uint _time) onlyIssuer public
+    function advSptIssueVesting(address _to, uint _time) onlyOwner public
     {
         require(saleTime == false);
         require(teamVestingTime >= _time);
@@ -311,22 +311,6 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         emit TeamIssue(_to, tokens);
     }
     
-    function advSptIssue(address _to, uint _value) onlyOwner public
-    {
-        uint tokens = _value * E18;
-        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
-        
-        balances[_to]                   = balances[_to].add( tokens.mul(435)/1000 );
-        privateFirstWallet[_to]         = privateFirstWallet[_to].add( tokens.mul(435)/1000 );
-        privateSecondWallet[_to]        = privateSecondWallet[_to].add( tokens.mul(130)/1000 );
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedSale = tokenIssuedSale.add(tokens);
-        privateIssuedSale = privateIssuedSale.add(tokens);
-        
-        emit SaleIssue(_to, tokens);
-    }
-    
     // Issue Function -----
     
     function publicIssue(address _to, uint _value) onlyOwner public
@@ -343,93 +327,21 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         emit SaleIssue(_to, tokens);
     }
     
-    function bdevIssue(address _to, uint _value) onlyIssuer public
-    {
-        uint tokens = _value * E18;
-        require(maxBdevSupply >= tokenIssuedBdev.add(tokens));
-        
-        balances[_to] = balances[_to].add(tokens);
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedBdev = tokenIssuedBdev.add(tokens);
-        
-        emit BdevIssue(_to, tokens);
-    }
-    
-    function mktIssue(address _to, uint _value) onlyIssuer public
-    {
-        uint tokens = _value * E18;
-        require(maxMktSupply >= tokenIssuedMkt.add(tokens));
-        
-        balances[_to] = balances[_to].add(tokens);
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedMkt = tokenIssuedMkt.add(tokens);
-        
-        emit MktIssue(_to, tokens);
-    }
-    
-    function rndIssue(address _to, uint _value) onlyIssuer public
-    {
-        uint tokens = _value * E18;
-        require(maxRndSupply >= tokenIssuedRnd.add(tokens));
-        
-        balances[_to] = balances[_to].add(tokens);
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedRnd = tokenIssuedRnd.add(tokens);
-        
-        emit RndIssue(_to, tokens);
-    }
-    
-    function reserveIssue(address _to, uint _value) onlyIssuer public
-    {
-        uint tokens = _value * E18;
-        require(maxReserveSupply >= tokenIssuedReserve.add(tokens));
-        
-        balances[_to] = balances[_to].add(tokens);
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedReserve = tokenIssuedReserve.add(tokens);
-        
-        emit ReserveIssue(_to, tokens);
-    }
-    
-    // ----
-    
-    
-    function advisorIssueVesting(address _to, uint _time) onlyIssuer public
-    {
-        require(saleTime == false);
-        require(advisorVestingTime >= _time);
-        
-        uint time = now;
-        require( ( ( endSaleTime + (_time * advisorVestingDate) ) < time ) && ( advisorVestingTimeAtSupply[_time] > 0 ) );
-        
-        uint tokens = advisorVestingTimeAtSupply[_time];
-        
-        require(maxAdvisorSupply >= tokenIssuedAdvisor.add(tokens));
-        
-        balances[_to] = balances[_to].add(tokens);
-        advisorVestingTimeAtSupply[_time] = 0;
-        
-        totalTokenSupply = totalTokenSupply.add(tokens);
-        tokenIssuedAdvisor = tokenIssuedAdvisor.add(tokens);
-        
-        emit AdvisorIssue(_to, tokens);
-    }
-    
     // -----
     
     // Lock Function -----
     
-    function isTransferable() private view returns (bool)
+    function isTransferable(address _who) private view returns (bool)
     {
+        if(blackLists[_who] == true)
+        {
+            return false;
+        }
         if(tokenLock == false)
         {
             return true;
         }
-        else if(msg.sender == manager)
+        else if(msg.sender == owner)
         {
             return true;
         }
@@ -437,7 +349,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         return false;
     }
     
-    function setTokenUnlock() onlyManager public
+    function setTokenUnlock() onlyOwner public
     {
         require(tokenLock == true);
         require(saleTime == false);
@@ -445,14 +357,14 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         tokenLock = false;
     }
     
-    function setTokenLock() onlyManager public
+    function setTokenLock() onlyOwner public
     {
         require(tokenLock == false);
         
         tokenLock = true;
     }
     
-    function privateUnlock(address _to) onlyManager public
+    function privateUnlock(address _to) onlyOwner public
     {
         require(tokenLock == false);
         require(saleTime == false);
@@ -486,7 +398,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         revert();
     }
     
-    function endSale() onlyManager public
+    function endSale() onlyOwner public
     {
         require(saleTime == true);
         
@@ -507,7 +419,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         }
     }
     
-    function withdrawTokens(address _contract, uint _decimals, uint _value) onlyManager public
+    function withdrawTokens(address _contract, uint _decimals, uint _value) onlyOwner public
     {
 
         if(_contract == address(0x0))
@@ -524,7 +436,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         }
     }
     
-    function burnToken(uint _value) onlyManager public
+    function burnToken(uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
         
@@ -538,7 +450,7 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         emit Burn(msg.sender, tokens);
     }
     
-    function close() onlyMaster public
+    function close() onlyOwner public
     {
         selfdestruct(msg.sender);
     }
