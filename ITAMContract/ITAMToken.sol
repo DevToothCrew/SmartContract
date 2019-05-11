@@ -123,23 +123,30 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     uint constant public maxPublicSaleSupply =      525000000 * E18;
     // *
     
-    uint constant public advSptVestingDate = 3 * month;
-    uint constant public advSptVestingTime = 2;
+    uint constant public advSptVestingSupplyPerTime = 25000000 * E18;
+    uint constant public advSptVestingDate = 2 * month;
+    uint constant public advSptVestingTime = 5;
     
-    uint constant public teamVestingDate = 6 * month;
-    uint constant public teamVestingTime = 3;
+    uint constant public teamVestingSupplyPerTime   = 12500000 * E18;
+    uint constant public teamVestingDelayDate = 6 * month;
+    uint constant public teamVestingDate = 1 * month;
+    uint constant public teamVestingTime = 20;
     
-    uint constant public mktVestingDate = 6 * month;
-    uint constant public mktVestingTime = 1;
+    uint constant public mktVestingSupplyFirst      = 125000000 * E18;
+    uint constant public mktVestingSupplyPerTime    =  25000000 * E18;
+    uint constant public mktVestingDate = 1 * month;
+    uint constant public mktVestingTime = 11;
     
-    uint constant public ecoVestingDate = 3 * month;
-    uint constant public ecoVestingTime = 1;
+    uint constant public ecoVestingSupplyFirst      = 250000000 * E18;
+    uint constant public ecoVestingSupplyPerTime    =  50000000 * E18;
+    uint constant public ecoVestingDate = 1 * month;
+    uint constant public ecoVestingTime = 11;
     
     uint constant public fnfSaleLockDate = 1 * month;
-    uint[5] constant public fnfSaleLockPer = [20, 20, 20, 20, 20];
+    uint constant public fnfSaleLockTime = 5;
     
     uint constant public privateSaleLockDate = 1 * month;
-    uint[6] constant public privateSaleLockPer = [20, 20, 20, 20, 20, 10, 10];
+    uint constant public privateSaleLockTime = 6;
     
     uint public totalTokenSupply;
     
@@ -159,22 +166,22 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     mapping (address => mapping ( address => uint )) public approvals;
     mapping (address => bool) public blackLists;
     
-    mapping (address => uint) public advSptVestingTimer;
-    mapping (address => mapping ( uint => uint )) public advSptVestingWallet;
+    mapping (uint => uint) public advSptVestingTimer;
+    mapping (uint => uint) public advSptVestingBalances;
     
-    mapping (address => uint) public teamVestingTimer;
-    mapping (address => mapping ( uint => uint )) public teamVestingWallet;
+    mapping (uint => uint) public teamVestingTimer;
+    mapping (uint => uint) public teamVestingBalances;
     
-    mapping (address => uint) public mktVestingTimer;
-    mapping (address => mapping ( uint => uint )) public mktVestingWallet;
+    mapping (uint => uint) public mktVestingTimer;
+    mapping (uint => uint) public mktVestingBalances;
     
-    mapping (address => uint) public ecoVestingTimer;
-    mapping (address => mapping ( uint => uint )) public ecoVestingWallet;
+    mapping (uint => uint) public ecoVestingTimer;
+    mapping (uint => uint) public ecoVestingBalances;
     
-    mapping (address => uint) public fnfLockTimer;
+    mapping (uint => uint) public fnfLockTimer;
     mapping (address => mapping ( uint => uint )) public fnfLockWallet;
     
-    mapping (address => uint) public privateLockTimer;
+    mapping (uint => uint) public privateLockTimer;
     mapping (address => mapping ( uint => uint )) public privateLockWallet;
     
     bool public tokenLock = true;
@@ -189,8 +196,8 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     
     event Burn(address indexed _from, uint _value);
     
-    event TokenUnLock(address indexed _to, uint _tokens);
-    event EndSale(address indexed _to, uint _tokens);
+    event TokenUnlock(address indexed _to, uint _tokens);
+    event EndSale(uint _date);
     
     constructor() public
     {
@@ -212,8 +219,34 @@ contract ITAMToken is ERC20Interface, OwnerHelper
 
         burnTokenSupply     = 0;
         
-        require(maxTotalSupply == maxTotalSupply + maxAdvSptSupply + maxTeamSupply + maxMktSupply + maxTeamSupply + maxEcoSupply + maxSaleSupply);
-        require(maxSaleSupply == maxFnFSaleSupply + maxPrivateSaleSupply + maxPublicSaleSupply);
+        require(maxAdvSptSupply == advSptVestingSupplyPerTime * advSptVestingTime, "Invalid AdvSpt Supply");
+        require(maxTeamSupply == teamVestingSupplyPerTime * teamVestingTime, "Invalid Team Supply");
+        require(maxMktSupply == mktVestingSupplyFirst + ( mktVestingSupplyPerTime * ( mktVestingTime - 1 ) ) , "Invalid Mkt Supply");
+        require(maxEcoSupply == ecoVestingSupplyFirst + ( ecoVestingSupplyPerTime * ( ecoVestingTime - 1 ) ) , "Invalid Eco Supply");
+        
+        uint fnfPercent = 0;
+        for(uint i = 0; i < fnfSaleLockTime; i++)
+        {
+            fnfPercent = fnfPercent.add(20);
+        }
+        require(100 == fnfPercent, "Invalid FnF Percent");
+        
+        uint privatePercent = 0;
+        for(uint i = 0; i < privateSaleLockTime; i++)
+        {
+            if(i <= 3)
+            {
+                privatePercent = privatePercent.add(20);
+            }
+            else
+            {
+                privatePercent = privatePercent.add(10);
+            }
+        }
+        require(100 == privatePercent, "Invalid Private Percent");
+        
+        require(maxTotalSupply == maxAdvSptSupply + maxTeamSupply + maxMktSupply + maxEcoSupply + maxSaleSupply, "Invalid Total Supply");
+        require(maxSaleSupply == maxFnFSaleSupply + maxPrivateSaleSupply + maxPublicSaleSupply, "Invalid Sale Supply");
     }
     
     // ERC - 20 Interface -----
@@ -288,22 +321,49 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     
     // -----
     
-    // Vesting Issue Function -----
+    // Vesting Function -----
     
-    function advSptIssueVesting(address _to, uint _time) onlyOwner public
+    // _time : 0 ~ 4
+    function advSptIssue(address _to, uint _time) onlyOwner public
     {
         require(saleTime == false);
-        require(teamVestingTime >= _time);
+        require( _time < advSptVestingTime);
         
-        uint time = now;
-        require( ( ( endSaleTime + (_time * teamVestingDate) ) < time ) && ( teamVestingTimeAtSupply[_time] > 0 ) );
+        uint nowTime = now;
+        require( nowTime > advSptVestingTimer[_time] );
         
-        uint tokens = teamVestingTimeAtSupply[_time];
+        uint tokens = advSptVestingSupplyPerTime;
 
+        require(tokens <= advSptVestingBalances[_time]);
+        require(tokens > 0);
+        require(maxAdvSptSupply >= tokenIssuedAdvSpt.add(tokens));
+        
+        balances[_to] = balances[_to].add(tokens);
+        advSptVestingBalances[_time] = 0;
+        
+        totalTokenSupply = totalTokenSupply.add(tokens);
+        tokenIssuedAdvSpt = tokenIssuedAdvSpt.add(tokens);
+        
+        emit AdvSptIssue(_to, tokens);
+    }
+    
+    // _time : 0 ~ 19
+    function teamIssue(address _to, uint _time) onlyOwner public
+    {
+        require(saleTime == false);
+        require( _time < teamVestingTime);
+        
+        uint nowTime = now;
+        require( nowTime > teamVestingTimer[_time] );
+        
+        uint tokens = teamVestingSupplyPerTime;
+
+        require(tokens <= teamVestingBalances[_time]);
+        require(tokens > 0);
         require(maxTeamSupply >= tokenIssuedTeam.add(tokens));
         
         balances[_to] = balances[_to].add(tokens);
-        teamVestingTimeAtSupply[_time] = 0;
+        teamVestingBalances[_time] = 0;
         
         totalTokenSupply = totalTokenSupply.add(tokens);
         tokenIssuedTeam = tokenIssuedTeam.add(tokens);
@@ -311,9 +371,144 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         emit TeamIssue(_to, tokens);
     }
     
-    // Issue Function -----
+    // _time : 0 ~ 10
+    function mktIssue(address _to, uint _time, uint _value) onlyOwner public
+    {
+        require(saleTime == false);
+        require( _time < mktVestingTime);
+        
+        uint nowTime = now;
+        require( nowTime > mktVestingTimer[_time] );
+        
+        uint tokens = _value * E18;
+
+        require(tokens <= mktVestingBalances[_time]);
+        require(tokens > 0);
+        require(maxMktSupply >= tokenIssuedMkt.add(tokens));
+        
+        balances[_to] = balances[_to].add(tokens);
+        mktVestingBalances[_time] = mktVestingBalances[_time].sub(tokens);
+        
+        totalTokenSupply = totalTokenSupply.add(tokens);
+        tokenIssuedMkt = tokenIssuedMkt.add(tokens);
+        
+        emit MktIssue(_to, tokens);
+    }
     
-    function publicIssue(address _to, uint _value) onlyOwner public
+    // _time : 0 ~ 10
+    function ecoIssue(address _to, uint _time, uint _value) onlyOwner public
+    {
+        require(saleTime == false);
+        require( _time < ecoVestingTime);
+        
+        uint nowTime = now;
+        require( nowTime > ecoVestingTimer[_time] );
+        
+        uint tokens = _value * E18;
+
+        require(tokens <= ecoVestingBalances[_time]);
+        require(tokens > 0);
+        require(maxEcoSupply >= tokenIssuedEco.add(tokens));
+        
+        balances[_to] = balances[_to].add(tokens);
+        ecoVestingBalances[_time] = ecoVestingBalances[_time].sub(tokens);
+        
+        totalTokenSupply = totalTokenSupply.add(tokens);
+        tokenIssuedEco = tokenIssuedEco.add(tokens);
+        
+        emit EcoIssue(_to, tokens);
+    }
+    
+    // Sale Function -----
+    
+    function fnfSaleIssue(address _to, uint _value) onlyOwner public
+    {
+        uint tokens = _value * E18;
+        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
+        require(maxFnFSaleSupply >= fnfIssuedSale.add(tokens));
+        require(tokens > 0);
+        
+        for(uint i = 0; i < fnfSaleLockTime; i++)
+        {
+            uint lockTokens = tokens.mul(20) / 100;
+            fnfLockWallet[_to][i] = lockTokens;
+        }
+        
+        balances[_to] = balances[_to].add(fnfLockWallet[_to][0]);
+        fnfLockWallet[_to][0] = 0;
+        
+        totalTokenSupply = totalTokenSupply.add(tokens);
+        tokenIssuedSale = tokenIssuedSale.add(tokens);
+        fnfIssuedSale = fnfIssuedSale.add(tokens);
+        
+        emit SaleIssue(_to, tokens);
+    }
+    
+    // _time : 1 ~ 4
+    function fnfSaleUnlock(address _to, uint _time) onlyOwner public
+    {
+        require(saleTime == false);
+        require( _time < fnfSaleLockTime);
+        
+        uint nowTime = now;
+        require( nowTime > fnfLockTimer[_time] );
+        
+        uint tokens = fnfLockWallet[_to][_time];
+        require(tokens > 0);
+        
+        balances[_to] = balances[_to].add(tokens);
+        fnfLockWallet[_to][_time] = 0;
+        
+        emit TokenUnlock(_to, tokens);
+    }
+    
+    function privateSaleIssue(address _to, uint _value) onlyOwner public
+    {
+        uint tokens = _value * E18;
+        require(maxSaleSupply >= tokenIssuedSale.add(tokens));
+        require(maxPrivateSaleSupply >= privateIssuedSale.add(tokens));
+        require(tokens > 0);
+        
+        for(uint i = 0; i < privateSaleLockTime; i++)
+        {
+            uint lockPer = 20;
+            if(i >= 4)
+            {
+                lockPer = 10;
+            }
+            uint lockTokens = tokens.mul(lockPer) / 100;
+            privateLockWallet[_to][i] = lockTokens;
+        }
+        
+        balances[_to] = balances[_to].add(privateLockWallet[_to][0]);
+        privateLockWallet[_to][0] = 0;
+        
+        totalTokenSupply = totalTokenSupply.add(tokens);
+        tokenIssuedSale = tokenIssuedSale.add(tokens);
+        privateIssuedSale = privateIssuedSale.add(tokens);
+        
+        emit SaleIssue(_to, tokens);
+    }
+    
+    // _time : 1 ~ 5
+    function privateSaleUnlock(address _to, uint _time) onlyOwner public
+    {
+        require(saleTime == false);
+        require( _time < privateSaleLockTime);
+        
+        uint nowTime = now;
+        require( nowTime > privateLockTimer[_time] );
+        
+        uint tokens = privateLockWallet[_to][_time];
+        require(tokens > 0);
+        
+        balances[_to] = balances[_to].add(tokens);
+        privateLockWallet[_to][_time] = 0;
+        
+        emit TokenUnlock(_to, tokens);
+    }
+    
+    function publicSaleIssue(address _to, uint _value) onlyOwner public
     {
         uint tokens = _value * E18;
         require(maxSaleSupply >= tokenIssuedSale.add(tokens));
@@ -364,31 +559,6 @@ contract ITAMToken is ERC20Interface, OwnerHelper
         tokenLock = true;
     }
     
-    function privateUnlock(address _to) onlyOwner public
-    {
-        require(tokenLock == false);
-        require(saleTime == false);
-        
-        uint time = now;
-        uint unlockTokens = 0;
-
-        if( (time >= endSaleTime.add(month)) && (privateFirstWallet[_to] > 0) )
-        {
-            balances[_to] = balances[_to].add(privateFirstWallet[_to]);
-            unlockTokens = unlockTokens.add(privateFirstWallet[_to]);
-            privateFirstWallet[_to] = 0;
-        }
-        
-        if( (time >= endSaleTime.add(month * 2)) && (privateSecondWallet[_to] > 0) )
-        {
-            balances[_to] = balances[_to].add(privateSecondWallet[_to]);
-            unlockTokens = unlockTokens.add(privateSecondWallet[_to]);
-            privateSecondWallet[_to] = 0;
-        }
-        
-        emit TokenUnLock(_to, unlockTokens);
-    }
-    
     // -----
     
     // ETC / Burn Function -----
@@ -401,22 +571,69 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     function endSale() onlyOwner public
     {
         require(saleTime == true);
+        require(maxSaleSupply == tokenIssuedSale);
         
         saleTime = false;
         
-        uint time = now;
+        uint nowTime = now;
         
-        endSaleTime = time;
+        endSaleTime = nowTime;
         
-        for(uint i = 1; i <= teamVestingTime; i++)
+        for(uint i = 0; i < advSptVestingTime; i++)
         {
-            teamVestingTimeAtSupply[i] = teamVestingTimeAtSupply[i].add(teamVestingSupplyPerTime);
+            uint lockTime = endSaleTime + (advSptVestingDate * i);
+            advSptVestingTimer[i] = lockTime;
+            advSptVestingBalances[i] = advSptVestingBalances[i].add(advSptVestingSupplyPerTime);
         }
         
-        for(uint i = 1; i <= advisorVestingTime; i++)
+        for(uint i = 0; i < teamVestingTime; i++)
         {
-            advisorVestingTimeAtSupply[i] = advisorVestingTimeAtSupply[i].add(advisorVestingSupplyPerTime);
+            uint lockTime = endSaleTime + teamVestingDelayDate + (teamVestingDate * i);
+            teamVestingTimer[i] = lockTime;
+            teamVestingBalances[i] = teamVestingBalances[i].add(teamVestingSupplyPerTime);
         }
+        
+        for(uint i = 0; i < mktVestingTime; i++)
+        {
+            uint lockTime = endSaleTime + (mktVestingDate * i);
+            mktVestingTimer[i] = lockTime;
+            if(i == 0)
+            {
+                mktVestingBalances[i] = mktVestingBalances[i].add(mktVestingSupplyFirst);
+            }
+            else
+            {
+                mktVestingBalances[i] = mktVestingBalances[i].add(mktVestingSupplyPerTime);
+            }
+        }
+        
+        for(uint i = 0; i < ecoVestingTime; i++)
+        {
+            uint lockTime = endSaleTime + (ecoVestingDate * i);
+            ecoVestingTimer[i] = lockTime;
+            if(i == 0)
+            {
+                ecoVestingBalances[i] = ecoVestingBalances[i].add(ecoVestingSupplyFirst);
+            }
+            else
+            {
+                ecoVestingBalances[i] = ecoVestingBalances[i].add(ecoVestingSupplyPerTime);
+            }
+        }
+        
+        for(uint i = 0; i < fnfSaleLockTime; i++)
+        {
+            uint lockTime = endSaleTime + (fnfSaleLockDate * i);
+            fnfLockTimer[i] = lockTime;
+        }
+        
+        for(uint i = 0; i < privateSaleLockTime; i++)
+        {
+            uint lockTime = endSaleTime + (privateSaleLockDate * i);
+            privateLockTimer[i] = lockTime;
+        }
+        
+        emit EndSale(endSaleTime);
     }
     
     function withdrawTokens(address _contract, uint _decimals, uint _value) onlyOwner public
@@ -453,6 +670,24 @@ contract ITAMToken is ERC20Interface, OwnerHelper
     function close() onlyOwner public
     {
         selfdestruct(msg.sender);
+    }
+    
+    // -----
+    
+    // BlackList function
+    
+    function addBlackList(address _to) onlyOwner public
+    {
+        require(blackLists[_to] == false);
+        
+        blackLists[_to] = true;
+    }
+    
+    function delBlackList(address _to) onlyOwner public
+    {
+        require(blackLists[_to] == true);
+        
+        blackLists[_to] = false;
     }
     
     // -----
