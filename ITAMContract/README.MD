@@ -1,0 +1,170 @@
+Read 함수 목록
+
+1. teamVestingTimer
+2. name
+3. ecoVestingSupplyFirst
+4. privateLockTimer
+5. saleTime
+6. totalSupply
+7. totalTokenSupply
+8. maxAdvSptSupply
+9. tokenIssuedSale
+10. burnTokenSupply
+11. fnfLockWallet
+12. balances
+13. maxTotalSupply
+14. tokenIssuedEco
+15. fnfSaleLockDate
+16. decimals
+17. ecoVestingTimer
+18. advSptVestingDate
+19. fnfIssuedSale
+20. ecoVestingTime
+21. mktVestingBalances
+22. privateIssuedSale
+23. mktVestingDate
+24. maxTeamSupply
+25. maxPrivateSaleSupply
+26. teamVestingSupplyPerTime
+27. endSaleTime
+28. fnfLockTimer
+29. mktVestingTimer
+30. balanceOf
+31. mktVestingSupplyFirst
+32. tokenIssuedAdvSpt
+33. maxFnFSaleSupply
+34. publicIssuedSale
+35. maxPublicSaleSupply
+36. owner
+37. symbol
+38. approvals
+39. maxMktSupply
+40. mktVestingSupplyPerTime
+41. maxSaleSupply
+42. teamVestingTime
+43. mktVestingTime
+44. ecoVestingSupplyPerTime
+45. privateSaleLockTime
+46. advSptVestingTime
+47. tokenIssuedTeam
+48. teamVestingBalances
+49. privateLockWallet
+50. advSptVestingTimer
+51. privateSaleLockDate
+52. allowance
+53. tokenIssuedMkt
+54. fnfSaleLockTime
+55. ecoVestingDate
+56. blackLists
+57. tokenLock
+58. ecoVestingBalances
+59. advSptVestingSupplyPerTime
+60. teamVestingDate
+61. advSptVestingBalances
+62. maxEcoSupply
+63. teamVestingDelayDate
+64. balanceOfAll
+
+Write 함수 목록
+1. privateSaleUnlock
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+2. approve
+_spender (address) 
+  _spender (address)
+_value (uint256) 
+  _value (uint256)
+3. addBlackList
+_to (address) 
+  _to (address)
+4. delBlackList
+_to (address) 
+  _to (address)
+5. transferFrom
+_from (address) 
+  _from (address)
+_to (address) 
+  _to (address)
+_value (uint256) 
+  _value (uint256)
+6. endSale
+7. close
+8. withdrawTokens
+_contract (address) 
+  _contract (address)
+_decimals (uint256) 
+  _decimals (uint256)
+_value (uint256) 
+  _value (uint256)
+9. ecoIssue
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+_value (uint256) 
+  _value (uint256)
+10. fnfSaleIssue
+_to (address) 
+  _to (address)
+_value (uint256) 
+  _value (uint256)
+11. teamIssue
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+12. advSptIssue
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+13. publicSaleIssue
+_to (address) 
+  _to (address)
+_value (uint256) 
+  _value (uint256)
+14. burnToken
+_value (uint256) 
+  _value (uint256)
+15. mktIssue
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+_value (uint256) 
+  _value (uint256)
+16. fnfSaleUnlock
+_to (address) 
+  _to (address)
+_time (uint256) 
+  _time (uint256)
+17. setTokenUnlock
+18. setTokenLock
+19. transfer
+_to (address) 
+  _to (address)
+_value (uint256) 
+  _value (uint256)
+20. privateSaleIssue
+_to (address) 
+  _to (address)
+_value (uint256) 
+  _value (uint256)
+21. changeTime
+_timerType (uint256) 
+  _timerType (uint256)
+_time (uint256) 
+  _time (uint256)
+_timeValue (uint256) 
+  _timeValue (uint256)
+22. transferOwnership
+_to (address) 
+  _to (address)
+
+테스트 코드
+Ropsten Network : 0xde75a92fd5084fd21219bba43935e307adfd7490
+테스트 순서
+
+작동 확인 : 
