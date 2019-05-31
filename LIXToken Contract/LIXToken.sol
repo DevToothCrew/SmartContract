@@ -96,7 +96,7 @@ contract LIXToken is ERC20Interface, OwnerHelper
     // - 3 months after Vesting 24 times
     
     // Marketing                                     540,000,000 (18%)
-    uint constant public maxMktSupply =              375000000 * E18;
+    uint constant public maxMktSupply =              540000000 * E18;
     // - 2 months after Vesting 18 times
     
     // Business Dev                                  450,000,000 (15%)
@@ -192,10 +192,10 @@ contract LIXToken is ERC20Interface, OwnerHelper
 
         burnTokenSupply     = 0;
         
-        require(maxOperSupply == operVestingSupply * operVestingTime);
-        require(maxMktSupply == mktVestingSupply * mktVestingTime);
-        require(maxBDevSupply == bDevVestingSupply * bDevVestingTime);
-        require(maxEventSupply == eventVestingSupply * eventVestingTime);
+        require(maxOperSupply == operVestingSupply.mul(operVestingTime));
+        require(maxMktSupply == mktVestingSupply.mul(mktVestingTime));
+        require(maxBDevSupply == bDevVestingSupply.mul(bDevVestingTime));
+        require(maxEventSupply == eventVestingSupply.mul(eventVestingTime));
         
         require(maxTotalSupply == maxOperSupply + maxMktSupply + maxBDevSupply + maxRsvSupply + maxEventSupply + maxSaleSupply);
     }
@@ -422,11 +422,6 @@ contract LIXToken is ERC20Interface, OwnerHelper
     
     // ETC / Burn Function -----
     
-    function () payable external
-    {
-        revert();
-    }
-    
     function endSale() onlyOwner public
     {
         require(saleTime == true);
@@ -460,11 +455,11 @@ contract LIXToken is ERC20Interface, OwnerHelper
         
         rsvVestingTime = endSaleTime + rsvVestingLockDate;
         
-        for(uint i = 1; i <= eventVestingTime; i++)
+        for(uint i = 0; i < eventVestingTime; i++)
         {
             uint lockTime = endSaleTime + (month * i);
-            eventVestingTimer[i] = lockTime;
-            eventVestingBalances[i] = eventVestingSupply;
+            eventVestingTimer[i + 1] = lockTime;
+            eventVestingBalances[i + 1] = eventVestingSupply;
         }
         
         emit EndSale(endSaleTime);
